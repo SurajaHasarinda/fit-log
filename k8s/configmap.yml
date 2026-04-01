@@ -1,0 +1,9 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: fit-log-config
+  namespace: fit-log
+data:
+  APP_NAME: "FitLog"
+  DEBUG: "false"
+  ALLOWED_ORIGINS: "*"

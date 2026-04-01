@@ -1,0 +1,66 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: fit-log
+  namespace: fit-log
+  labels:
+    app: fit-log
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: fit-log
+  template:
+    metadata:
+      labels:
+        app: fit-log
+    spec:
+      containers:
+      - name: fit-log-app
+        image: fit-log:latest
+        ports:
+        - containerPort: 9281
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "100m"
+          limits:
+            memory: "768Mi"
+            cpu: "500m"
+        envFrom:
+        - configMapRef:
+            name: fit-log-config
+        env:
+        - name: DATABASE_URL
+          valueFrom:
+            secretKeyRef:
+              name: fit-log-secret
+              key: DATABASE_URL
+        - name: GEMINI_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: fit-log-secret
+              key: GEMINI_API_KEY
+        - name: JWT_SECRET_KEY
+          valueFrom:
+            secretKeyRef:
+              name: fit-log-secret
+              key: JWT_SECRET_KEY
+        livenessProbe:
+          httpGet:
+            path: /api/health
+            port: 9281
+          initialDelaySeconds: 20
+          periodSeconds: 30
+        readinessProbe:
+          httpGet:
+            path: /api/health
+            port: 9281
+          initialDelaySeconds: 10
+          periodSeconds: 15
+        startupProbe:
+          httpGet:
+            path: /api/health
+            port: 9281
+          failureThreshold: 15
+          periodSeconds: 10

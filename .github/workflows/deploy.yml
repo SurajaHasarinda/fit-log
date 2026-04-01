@@ -1,0 +1,75 @@
+name: Deploy to K3s
+
+on:
+  workflow_run:
+    workflows: ["Build and Push Docker Image"]
+    types:
+      - completed
+    branches:
+      - main
+      - master
+  workflow_dispatch:
+
+env:
+  K3S_HOST: ${{ secrets.K3S_HOST }}
+  K3S_USER: ${{ secrets.K3S_USER }}
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    if: ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success' }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up SSH key
+        env:
+          SSH_KEY: ${{ secrets.K3S_SSH_KEY }}
+        run: |
+          mkdir -p ~/.ssh
+          echo "$SSH_KEY" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          cat << 'EOF' > ~/.ssh/config
+          Host *
+            StrictHostKeyChecking no
+            UserKnownHostsFile /dev/null
+          EOF
+
+      - name: Substitute secrets into K8s manifests
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          JWT_SECRET_KEY: ${{ secrets.JWT_SECRET_KEY }}
+        run: |
+          # Install envsubst if it's not present (ubuntu-latest should have it)
+          envsubst < k8s/secret.yml > k8s/secret-rendered.yml
+
+      - name: Copy manifests to K3s node
+        run: |
+          scp k8s/namespace.yml ${{ env.K3S_USER }}@${{ env.K3S_HOST }}:/tmp/fl-namespace.yml
+          scp k8s/secret-rendered.yml ${{ env.K3S_USER }}@${{ env.K3S_HOST }}:/tmp/fl-secret.yml
+          scp k8s/configmap.yml ${{ env.K3S_USER }}@${{ env.K3S_HOST }}:/tmp/fl-configmap.yml
+          scp k8s/postgres.yml ${{ env.K3S_USER }}@${{ env.K3S_HOST }}:/tmp/fl-postgres.yml
+          scp k8s/deployment.yml ${{ env.K3S_USER }}@${{ env.K3S_HOST }}:/tmp/fl-deployment.yml
+          scp k8s/service.yml ${{ env.K3S_USER }}@${{ env.K3S_HOST }}:/tmp/fl-service.yml
+
+      - name: Deploy to K3s
+        run: |
+          ssh ${{ env.K3S_USER }}@${{ env.K3S_HOST }} << 'EOF'
+            sudo k3s kubectl apply -f /tmp/fl-namespace.yml
+            sudo k3s kubectl apply -f /tmp/fl-configmap.yml
+            sudo k3s kubectl apply -f /tmp/fl-secret.yml
+            sudo k3s kubectl apply -f /tmp/fl-postgres.yml
+            sudo k3s kubectl apply -f /tmp/fl-deployment.yml
+            sudo k3s kubectl apply -f /tmp/fl-service.yml
+
+            # Force pull the latest images
+            sudo k3s kubectl rollout restart deployment/fit-log -n fit-log
+
+            # Wait for rollouts to complete
+            sudo k3s kubectl rollout status deployment/fit-log -n fit-log --timeout=120s
+
+            # Cleanup temp files
+            rm -f /tmp/fl-namespace.yml /tmp/fl-configmap.yml /tmp/fl-secret.yml /tmp/fl-postgres.yml /tmp/fl-deployment.yml /tmp/fl-service.yml
+          EOF

@@ -6,4 +6,4 @@ metadata:
 data:
   APP_NAME: "FitLog"
   DEBUG: "false"
-  ALLOWED_ORIGINS: "*"
+  ALLOWED_ORIGINS: "[\"*\"]"

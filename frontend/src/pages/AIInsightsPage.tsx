@@ -118,24 +118,32 @@ const AIInsightsPage: React.FC = () => {
         const parts = rawText.split(' - ');
         if (parts.length === 3) {
             return (
-                <div key={index} className="flex gap-4 items-center bg-surface-800/50 p-4 rounded-xl border border-surface-700/50 hover:border-brand/30 transition-colors">
-                    <span className="w-8 h-8 rounded-full bg-gradient-to-br from-brand to-accent text-white text-sm font-bold flex items-center justify-center shrink-0 shadow-lg shadow-brand/20">
-                        {index + 1}
-                    </span>
-                    <div className="flex-1 flex flex-col md:flex-row md:items-center justify-between gap-2">
-                        <div>
+                <div key={index} className="flex flex-col sm:flex-row gap-4 items-start sm:items-center bg-surface-800/50 p-4 rounded-xl border border-surface-700/50 hover:border-brand/30 transition-colors">
+                    <div className="flex items-center gap-3 w-full sm:w-auto">
+                        <span className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-gradient-to-br from-brand to-accent text-white text-xs sm:text-sm font-bold flex items-center justify-center shrink-0 shadow-lg shadow-brand/20">
+                            {index + 1}
+                        </span>
+                        <div className="sm:hidden flex-1 overflow-hidden">
+                             <p className="text-sm font-bold text-slate-100 truncate">{parts[0].trim()}</p>
+                             <p className="text-xs text-slate-400">{parts[1].trim()}</p>
+                        </div>
+                    </div>
+                    
+                    <div className="flex-1 flex flex-col justify-between gap-3 w-full">
+                        <div className="hidden sm:block">
                             <p className="text-base font-semibold text-slate-200">{parts[0].trim()}</p>
                             <p className="text-sm text-slate-400">{parts[1].trim()}</p>
                         </div>
-                        <div className="flex items-center gap-2 mt-3 md:mt-0">
-                            <div className="px-3 py-1.5 rounded-lg bg-surface-700/50 whitespace-nowrap flex items-center gap-2">
-                                <ArrowRight size={14} className="text-brand" />
-                                <span className="text-xs font-medium text-slate-300">Focus: {parts[2].trim()}</span>
+                        
+                        <div className="flex flex-wrap items-center justify-between gap-2">
+                            <div className="px-3 py-1.5 rounded-lg bg-surface-700/50 flex items-center gap-2">
+                                <ArrowRight size={12} className="text-brand" />
+                                <span className="text-[10px] sm:text-xs font-medium text-slate-300">Target: {parts[2].trim()}</span>
                             </div>
                             {planDays.length > 0 && (
                                 <button 
                                     onClick={() => handleAddClick(parts[0].trim(), parts[1].trim())}
-                                    className="bg-brand/20 hover:bg-brand text-brand-light hover:text-white px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer flex items-center gap-1.5 shadow-sm shadow-brand/10 border border-brand/30"
+                                    className="bg-brand/20 hover:bg-brand text-brand-light hover:text-white px-4 py-2 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 shadow-sm shadow-brand/10 border border-brand/30 shrink-0"
                                 >
                                     <Plus size={14} /> Add
                                 </button>
@@ -158,7 +166,7 @@ const AIInsightsPage: React.FC = () => {
     };
 
     return (
-        <div className="p-6 md:p-8 animate-slide-up flex flex-col gap-6 max-w-5xl mx-auto">
+        <div className="p-4 md:p-8 animate-slide-up flex flex-col gap-6 max-w-5xl mx-auto w-full overflow-x-hidden">
             {/* Header */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>

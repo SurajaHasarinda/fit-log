@@ -6,9 +6,10 @@ metadata:
   labels:
     app: fit-log
 spec:
-  type: LoadBalancer
+  type: NodePort
   selector:
     app: fit-log
   ports:
     - port: 80
       targetPort: 9281
+      nodePort: 30006

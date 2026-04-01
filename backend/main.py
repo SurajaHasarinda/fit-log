@@ -86,13 +86,25 @@ async def health_check():
     logger.info("Health check endpoint was called")
     return {"status": "healthy", "app": "FitLog"}
 
+
+# ── Static Files (Frontend) ───────────────────────────────────────────────────
+
+from fastapi.staticfiles import StaticFiles
+from pathlib import Path
+
+# Serve frontend static files if available (for production/docker)
+static_dir = Path(__file__).parent / "static"
+if static_dir.exists():
+    app.mount("/", StaticFiles(directory=str(static_dir), html=True), name="static")
+
+
 if __name__ == "__main__":
     import uvicorn
     # Use uvicorn runner when main.py is executed directly
     uvicorn.run(
         "main:app",
         host="0.0.0.0",
-        port=8000,
+        port=9281,
         reload=settings.DEBUG,
         access_log=True
     )

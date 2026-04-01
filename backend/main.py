@@ -82,6 +82,14 @@ app.include_router(ai_router)
 async def health_check():
     return {"status": "healthy", "app": "FitLog"}
 
+from fastapi.staticfiles import StaticFiles
+from pathlib import Path
+static_dir = Path("/app/static")
+if not static_dir.exists():
+    static_dir = Path(__file__).parent / "static"
+if static_dir.exists():
+    app.mount("/", StaticFiles(directory=str(static_dir), html=True), name="static")
+
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run("main:app", host="0.0.0.0", port=9281, reload=settings.DEBUG)

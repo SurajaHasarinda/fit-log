@@ -57,7 +57,6 @@ jobs:
           scp k8s/namespace.yml ${{ env.K3S_USER }}@${{ env.K3S_HOST }}:/tmp/fl-namespace.yml
           scp k8s/secret-rendered.yml ${{ env.K3S_USER }}@${{ env.K3S_HOST }}:/tmp/fl-secret.yml
           scp k8s/configmap.yml ${{ env.K3S_USER }}@${{ env.K3S_HOST }}:/tmp/fl-configmap.yml
-          scp k8s/postgres.yml ${{ env.K3S_USER }}@${{ env.K3S_HOST }}:/tmp/fl-postgres.yml
           scp k8s/deployment.yml ${{ env.K3S_USER }}@${{ env.K3S_HOST }}:/tmp/fl-deployment.yml
           scp k8s/service.yml ${{ env.K3S_USER }}@${{ env.K3S_HOST }}:/tmp/fl-service.yml
 
@@ -67,7 +66,6 @@ jobs:
             sudo k3s kubectl apply -f /tmp/fl-namespace.yml
             sudo k3s kubectl apply -f /tmp/fl-configmap.yml
             sudo k3s kubectl apply -f /tmp/fl-secret.yml
-            sudo k3s kubectl apply -f /tmp/fl-postgres.yml
             sudo k3s kubectl apply -f /tmp/fl-deployment.yml
             sudo k3s kubectl apply -f /tmp/fl-service.yml
 
@@ -78,5 +76,5 @@ jobs:
             sudo k3s kubectl rollout status deployment/fit-log -n fit-log --timeout=120s
 
             # Cleanup temp files
-            rm -f /tmp/fl-namespace.yml /tmp/fl-configmap.yml /tmp/fl-secret.yml /tmp/fl-postgres.yml /tmp/fl-deployment.yml /tmp/fl-service.yml
+            rm -f /tmp/fl-namespace.yml /tmp/fl-configmap.yml /tmp/fl-secret.yml /tmp/fl-deployment.yml /tmp/fl-service.yml
           EOF

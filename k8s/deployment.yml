@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
       - name: fit-log-app
-        image: fit-log:latest
+        image: surajadev/fit-log:latest
         ports:
         - containerPort: 9281
         resources:

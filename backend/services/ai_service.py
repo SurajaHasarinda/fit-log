@@ -63,8 +63,12 @@ class AIService:
                         "name": ex.name,
                         "sets": ex.sets,
                         "reps": ex.reps,
-                        "max_pr_kg": max([p.weight for p in ex.prs]) if ex.prs else None,
-                        "pr_count": len(ex.prs) if ex.prs else 0,
+                        "current_max_kg": max([p.weight for p in ex.prs]) if ex.prs else None,
+                        "recent_prs": [
+                            {"weight": p.weight, "date": p.recorded_at.strftime("%Y-%m-%d")} 
+                            # Sort by date descending and take last 5
+                            for p in sorted(ex.prs, key=lambda p: p.recorded_at, reverse=True)[:5]
+                        ],
                     }
                     for ex in sorted(day.exercises, key=lambda e: e.sort_order)
                 ],
@@ -115,8 +119,9 @@ class AIService:
                 "summary": response_json.get("summary", ""),
                 "covered_muscle_groups": response_json.get("covered_muscle_groups", []),
                 "missing_muscle_groups": response_json.get("missing_muscle_groups", []),
-                "recommendations": response_json.get("recommendations", []),
-                "improvement_suggestions": response_json.get("improvement_suggestions", []),
+                "new_exercises": response_json.get("new_exercises", []),
+                "general_tips": response_json.get("general_tips", []),
+                "exercise_advice": response_json.get("exercise_advice", []),
             }
             
             # Save the new insights to the plan
@@ -130,8 +135,9 @@ class AIService:
                 "summary": f"AI analysis is currently unavailable: {str(e)}",
                 "covered_muscle_groups": [],
                 "missing_muscle_groups": [],
-                "recommendations": ["Ensure GEMINI_API_KEY is set in your .env file."],
-                "improvement_suggestions": [],
+                "new_exercises": ["Ensure GEMINI_API_KEY is set in your .env file."],
+                "general_tips": [],
+                "exercise_advice": []
             }
 
     @staticmethod
@@ -146,7 +152,15 @@ class AIService:
         )
         plan = result.scalar_one_or_none()
         if plan and plan.ai_insights:
-            return plan.ai_insights
+            # Simple check if it's the old schema and adapt it
+            insights = plan.ai_insights
+            if "recommendations" in insights:
+                insights["new_exercises"] = insights.get("recommendations", [])
+            if "improvement_suggestions" in insights:
+                insights["general_tips"] = insights.get("improvement_suggestions", [])
+            if "exercise_advice" not in insights:
+                insights["exercise_advice"] = []
+            return insights
         return None
 
     @staticmethod
@@ -157,7 +171,10 @@ Review the following workout plan, user profile, and performance data (PRs). You
 1. Identify which major muscle groups are already covered by the plan.
 2. Identify any major muscle groups that are MISSING or underrepresented.
 3. Provide specific exercise recommendations to fill the gaps.
-4. ANALYZE the current PRs and suggest IMPROVEMENTS for existing exercises (e.g., progressive overload tips, set/rep adjustments based on current strength).
+4. PROGRESSIVE OVERLOAD ANALYSIS: Analyze the `recent_prs` history for each exercise. 
+   - If the weight has been stagnant for more than 3 sessions (plateau), suggest specific ways to break it (e.g., fractional plates, change in rep range).
+   - If the weight is increasing consistently, suggest the next weight jump (e.g., 2.5kg for upper body, 5kg for lower body).
+   - If there are no PRs recorded yet, suggest a starting weight or testing strategy.
 
 MAJOR MUSCLE GROUPS:
 Chest, Back, Shoulders, Biceps, Triceps, Forearms, Core/Abs, Quads, Hamstrings, Glutes, Calves
@@ -168,13 +185,14 @@ USER PROFILE & METADATA:
 CURRENT WORKOUT PLAN & PERFORMANCE (PRs):
 {json.dumps(plan_data, indent=2)}
 
-Respond with a JSON object containing:
-- "summary": A 2-3 sentence assessment of the plan's overall coverage and user progress
-- "covered_muscle_groups": An array of muscle group names that are well-covered
-- "missing_muscle_groups": An array of muscle group names that are missing
-- "recommendations": An array of 3-6 specific NEW exercises to add. Format: "Exercise Name - Reps x Sets - Target Muscle"
-- "improvement_suggestions": An array of 3-5 specific tips to improve CURRENT exercises based on PRs. 
-  Example: "Increase weight on Bench Press by 2.5kg next week to break your 80kg plateau." or "Try 4 sets of 12 for Squats to improve hypertrophy for your goal."
+Respond with a JSON object exactly matching this structure:
+- "summary": A brief, high-level summary of the current workout plan effectiveness.
+- "covered_muscle_groups": An array of muscle groups already targeted.
+- "missing_muscle_groups": An array of major muscle groups that should be ADDED.
+- "new_exercises": An array of 3-6 specific NEW exercises to add (e.g., "Face Pulls - 3x15 - Rear Delts").
+- "general_tips": An array of general coaching tips (e.g., rest days, hydration, warming up).
+- "exercise_advice": An array of "ExerciseAdvice" objects, ONE FOR EVERY CURRENT EXERCISE in the plan.
+  Example: {{"name": "Bench Press", "advice": "Plateau detected at 60kg for last 4 weeks. Try 5x5 instead of 3x10 next session."}}
 
-IMPORTANT: Keep suggestions concise and actionable.
+IMPORTANT: Provide advice for EVERY CURRENT exercise. Keep suggestions concise and actionable.
 """

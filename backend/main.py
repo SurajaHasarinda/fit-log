@@ -1,8 +1,11 @@
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from starlette.middleware.base import BaseHTTPMiddleware
+from fastapi.responses import JSONResponse
 import logging
 import sys
+import time
 
 from config import get_settings
 from database import create_tables
@@ -13,8 +16,6 @@ from controllers.exercise_controller import router as exercise_router
 from controllers.weight_controller import router as weight_router
 from controllers.analytics_controller import router as analytics_router
 from controllers.ai_controller import router as ai_router
-from starlette.middleware.base import BaseHTTPMiddleware
-import time
 
 logger = logging.getLogger("fitlog")
 logger.setLevel(logging.INFO)
@@ -27,41 +28,39 @@ class LoggingMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next):
         start_time = time.time()
         logger.info(f"INCOMING | {request.method:7} | {request.url.path}")
-        try:
-            response = await call_next(request)
-            process_time = (time.time() - start_time) * 1000
-            logger.info(f"COMPLETE | {request.method:7} | {request.url.path} | {response.status_code} | {process_time:.2f}ms")
-            return response
-        except Exception as e:
-            process_time = (time.time() - start_time) * 1000
-            logger.error(f"ERROR    | {request.method:7} | {request.url.path} | FAILED | {process_time:.2f}ms | {str(e)}")
-            raise e from None
-
+        response = await call_next(request)
+        process_time = (time.time() - start_time) * 1000
+        logger.info(f"COMPLETE | {request.method:7} | {request.url.path} | {response.status_code} | {process_time:.2f}ms")
+        return response
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    """Startup & shutdown events."""
-    logger.info("Starting FitLog Backend Services...")
+    logger.info("Starting FitLog")
     try:
         await create_tables()
-        logger.info("Successfully connected to the database and initialized tables.")
     except Exception as e:
-        logger.error(f"Failed to initialize database: {str(e)}", exc_info=True)
+        logger.error(f"DB Error: {str(e)}", exc_info=True)
     yield
-    logger.info("Shutting down FitLog Backend Services...")
-
+    logger.info("Shutting down FitLog")
 
 settings = get_settings()
 
 app = FastAPI(
     title=settings.APP_NAME,
-    description="Gym progress tracking API",
-    version="1.0.0",
     lifespan=lifespan,
     debug=settings.DEBUG,
 )
 
-# CORS - allow configured origins
+@app.exception_handler(Exception)
+async def global_exception_handler(request: Request, exc: Exception):
+    logger.error(f"FATAL | {request.method} {request.url.path} | {str(exc)}", exc_info=True)
+    if not settings.DEBUG:
+        return JSONResponse(status_code=500, content={"detail": "Internal Server Error"})
+    return JSONResponse(
+        status_code=500, 
+        content={"detail": str(exc), "type": exc.__class__.__name__}
+    )
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.ALLOWED_ORIGINS,
@@ -71,7 +70,6 @@ app.add_middleware(
 )
 app.add_middleware(LoggingMiddleware)
 
-# Register all routers
 app.include_router(auth_router)
 app.include_router(user_router)
 app.include_router(plan_router)
@@ -80,31 +78,10 @@ app.include_router(weight_router)
 app.include_router(analytics_router)
 app.include_router(ai_router)
 
-
 @app.get("/api/health")
 async def health_check():
-    logger.info("Health check endpoint was called")
     return {"status": "healthy", "app": "FitLog"}
-
-
-# ── Static Files (Frontend) ───────────────────────────────────────────────────
-
-from fastapi.staticfiles import StaticFiles
-from pathlib import Path
-
-# Serve frontend static files if available (for production/docker)
-static_dir = Path(__file__).parent / "static"
-if static_dir.exists():
-    app.mount("/", StaticFiles(directory=str(static_dir), html=True), name="static")
-
 
 if __name__ == "__main__":
     import uvicorn
-    # Use uvicorn runner when main.py is executed directly
-    uvicorn.run(
-        "main:app",
-        host="0.0.0.0",
-        port=9281,
-        reload=settings.DEBUG,
-        access_log=True
-    )
+    uvicorn.run("main:app", host="0.0.0.0", port=9281, reload=settings.DEBUG)

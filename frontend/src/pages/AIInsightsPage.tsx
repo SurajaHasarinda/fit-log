@@ -60,8 +60,9 @@ const AIInsightsPage: React.FC = () => {
                 summary: 'Failed to get AI analysis. Check your API key or ensure you have a current workout plan.',
                 covered_muscle_groups: [],
                 missing_muscle_groups: [],
-                recommendations: [],
-                improvement_suggestions: []
+                new_exercises: [],
+                general_tips: [],
+                exercise_advice: []
             });
         } finally {
             setLoading(false);
@@ -233,32 +234,52 @@ const AIInsightsPage: React.FC = () => {
                         </div>
                     </div>
 
-                    {insight.recommendations.length > 0 && (
+                    {insight.new_exercises && insight.new_exercises.length > 0 && (
                         <div className="glass rounded-xl p-6 mt-2 relative overflow-hidden">
                             <div className="absolute top-0 right-0 w-64 h-64 bg-brand/5 rounded-full blur-3xl -mr-20 -mt-20 pointer-events-none"></div>
                             
                             <h3 className="text-sm font-bold text-transparent bg-clip-text bg-gradient-to-r from-brand-light to-accent uppercase tracking-widest mb-6 flex items-center gap-2">
-                                <Sparkles size={18} className="text-brand" />
-                                Actionable Recommendations
+                                <Plus size={18} className="text-brand" />
+                                Add New Exercises
                             </h3>
                             
                             <div className="space-y-4">
-                                {insight.recommendations.map((item, i) => renderRecommendation(item, i))}
+                                {insight.new_exercises.map((item, i) => renderRecommendation(item, i))}
                             </div>
                         </div>
                     )}
 
-                    {insight.improvement_suggestions && insight.improvement_suggestions.length > 0 && (
+                    {insight.exercise_advice && insight.exercise_advice.length > 0 && (
+                        <div className="glass rounded-xl p-6 mt-2 relative overflow-hidden border-l-4 border-l-accent/50">
+                            <div className="absolute top-0 right-0 w-48 h-48 bg-accent/5 rounded-full blur-3xl -mr-10 -mt-10 pointer-events-none"></div>
+                            
+                            <h3 className="text-sm font-bold text-accent uppercase tracking-widest mb-6 flex items-center gap-2">
+                                <Brain size={18} />
+                                Per-Exercise Coaching
+                            </h3>
+                            
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                {insight.exercise_advice.map((advice, i) => (
+                                    <div key={i} className="flex flex-col gap-2 bg-surface-900/40 p-5 rounded-xl border border-surface-700/30">
+                                        <h4 className="text-base font-bold text-white">{advice.name}</h4>
+                                        <p className="text-sm text-slate-300 leading-relaxed italic">{advice.advice}</p>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+
+                    {insight.general_tips && insight.general_tips.length > 0 && (
                         <div className="glass rounded-xl p-6 mt-2 relative overflow-hidden border-l-4 border-l-brand/50">
                             <div className="absolute top-0 right-0 w-48 h-48 bg-warning/5 rounded-full blur-3xl -mr-10 -mt-10 pointer-events-none"></div>
                             
                             <h3 className="text-sm font-bold text-warning uppercase tracking-widest mb-6 flex items-center gap-2">
                                 <TrendingUp size={18} />
-                                Performance Improvements
+                                General Performance Tips
                             </h3>
                             
                             <div className="space-y-3">
-                                {insight.improvement_suggestions.map((suggestion, i) => (
+                                {insight.general_tips.map((suggestion, i) => (
                                     <div key={i} className="flex gap-3 items-start bg-surface-900/40 p-4 rounded-xl border border-surface-700/30">
                                         <div className="w-6 h-6 rounded-lg bg-warning/20 text-warning text-xs font-bold flex items-center justify-center shrink-0 mt-0.5">
                                             {i + 1}

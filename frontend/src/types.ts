@@ -68,12 +68,18 @@ export interface DashboardStats {
     fitness_goal: string | null;
 }
 
+export interface ExerciseAdvice {
+    name: string;
+    advice: string;
+}
+
 export interface AIInsight {
     summary: string;
     covered_muscle_groups: string[];
     missing_muscle_groups: string[];
-    recommendations: string[];
-    improvement_suggestions?: string[];
+    new_exercises: string[];
+    general_tips: string[];
+    exercise_advice: ExerciseAdvice[];
 }
 
 export interface WeightTrendPoint {

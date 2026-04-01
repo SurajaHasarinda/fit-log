@@ -36,6 +36,8 @@ async def get_insights(
             summary="No AI analysis has run for your current plan yet. Click 'Analyze Current Plan' to run it.",
             covered_muscle_groups=[],
             missing_muscle_groups=[],
-            recommendations=[]
+            new_exercises=[],
+            general_tips=[],
+            exercise_advice=[]
         )
     return insights

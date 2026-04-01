@@ -1,0 +1,105 @@
+@import url("https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400;1,700&display=swap");
+@import "tailwindcss";
+
+@theme {
+  --color-brand: #ff5722; /* Vivid Orange */
+  --color-brand-light: #ff8a65;
+  --color-brand-dark: #e64a19;
+  --color-accent: #ffb300; /* Amber */
+  --color-accent-light: #ffe54c;
+  --color-success: #00B894;
+  --color-warning: #FDCB6E;
+  --color-danger: #FF7675;
+  --color-surface-900: #0B0E14;
+  --color-surface-800: #131720;
+  --color-surface-700: #1A1F2E;
+  --color-surface-600: #242B3D;
+  --color-surface-500: #2D364A;
+
+  --font-mono: 'Space Mono', 'Courier New', monospace;
+
+  --animate-slide-up: slide-up 0.4s ease-out;
+  --animate-fade-in: fade-in 0.3s ease-out;
+  --animate-pulse-glow: pulse-glow 2s ease-in-out infinite;
+
+  @keyframes slide-up {
+    from {
+      transform: translateY(20px);
+      opacity: 0;
+    }
+    to {
+      transform: translateY(0);
+      opacity: 1;
+    }
+  }
+
+  @keyframes fade-in {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+
+  @keyframes pulse-glow {
+    0%, 100% {
+      box-shadow: 0 0 5px rgba(255, 87, 34, 0.3);
+    }
+    50% {
+      box-shadow: 0 0 20px rgba(255, 87, 34, 0.6);
+    }
+  }
+
+  @keyframes shimmer {
+    0% {
+      background-position: -200% 0;
+    }
+    100% {
+      background-position: 200% 0;
+    }
+  }
+}
+
+@layer base {
+  body {
+    background-color: var(--color-surface-900);
+    color: #f8fafc;
+    font-family: var(--font-mono);
+  }
+}
+
+@layer utilities {
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 6px;
+  }
+  .custom-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    background: var(--color-surface-500);
+    border-radius: 10px;
+  }
+  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: var(--color-surface-600); /* Adjusted fallback */
+  }
+
+  .skeleton-shimmer {
+    background: linear-gradient(90deg, var(--color-surface-700) 25%, var(--color-surface-600) 50%, var(--color-surface-700) 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.5s ease-in-out infinite;
+  }
+
+  .glass {
+    background: rgba(19, 23, 32, 0.7);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 87, 34, 0.15);
+  }
+
+  .gradient-text {
+    background: linear-gradient(135deg, var(--color-brand), var(--color-accent));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+}

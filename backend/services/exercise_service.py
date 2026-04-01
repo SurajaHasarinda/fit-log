@@ -54,6 +54,7 @@ class ExerciseService:
         )
         db.add(exercise)
         await db.flush()
+        await db.refresh(exercise, ["prs"])
         return exercise
 
     @staticmethod
@@ -73,6 +74,7 @@ class ExerciseService:
         for key, value in update_data.items():
             setattr(exercise, key, value)
         await db.flush()
+        await db.refresh(exercise, ["prs"])
         return exercise
 
     @staticmethod
